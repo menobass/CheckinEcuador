@@ -141,36 +141,36 @@ class CheckinEcuadorApp {
         // Show upload status immediately
         this.showImageUploadStatus('📤 Uploading image...', 'loading');
 
-        // Upload image using Imgur (simple and reliable)
-        try {
-            if (this.currentUser && this.postingKey) {
-                console.log('Uploading to Imgur...');
-                this.uploadedImageUrl = await this.imageUploadService.uploadImage(file);
-                this.showImageUploadStatus('✅ Image uploaded successfully to Imgur!', 'success');
+        // Use EXACTLY the same approach as working admin.html
+        const IMGUR_CLIENT_ID = '4d83e353ac99be2';
+        const formData = new FormData();
+        formData.append('image', file);
+        
+        fetch('https://api.imgur.com/3/image', {
+            method: 'POST',
+            headers: {
+                Authorization: 'Client-ID ' + IMGUR_CLIENT_ID
+            },
+            body: formData
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success && data.data && data.data.link) {
+                // Success - store the URL and update UI
+                this.uploadedImageUrl = data.data.link;
+                this.showImageUploadStatus('✅ Image uploaded successfully!', 'success');
                 console.log('Image URL ready:', this.uploadedImageUrl);
+                
+                // Show preview (disabled for testing)
+                // this.showImagePreview(file);
             } else {
-                this.showImageUploadStatus('❌ Please login first', 'error');
-                return;
+                this.showImageUploadStatus('❌ Upload failed: Invalid response', 'error');
             }
-            
-            // Show the image preview after upload
-            this.showImagePreview(file);
-            
-        } catch (error) {
-            console.error('Image upload failed:', error);
-            
-            // Provide specific error messages for different scenarios
-            let errorMessage = 'Upload failed: ';
-            if (error.message.includes('429')) {
-                errorMessage += 'Rate limit reached. Using fallback method...';
-            } else if (error.message.includes('Failed to upload image')) {
-                errorMessage += 'All upload methods failed. Please try again later.';
-            } else {
-                errorMessage += error.message;
-            }
-            
-            this.showImageUploadStatus('❌ ' + errorMessage, 'error');
-        }
+        })
+        .catch(error => {
+            console.error('Upload failed:', error);
+            this.showImageUploadStatus('❌ Upload failed: ' + error.message, 'error');
+        });
     }
 
     showImagePreview(file) {

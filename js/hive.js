@@ -154,14 +154,15 @@ class ImageUploadService {
         try {
             console.log('Uploading image to Imgur...', file.name);
             
-            // Use the same approach as the working admin.html
+            // Use EXACTLY the same approach as the working admin.html
+            const IMGUR_CLIENT_ID = '4d83e353ac99be2';
             const formData = new FormData();
             formData.append('image', file);
-
-            const response = await fetch(this.uploadEndpoint, {
+            
+            const response = await fetch('https://api.imgur.com/3/image', {
                 method: 'POST',
                 headers: {
-                    'Authorization': 'Client-ID ' + this.imgurClientIds[0]  // Use first client ID
+                    Authorization: 'Client-ID ' + IMGUR_CLIENT_ID
                 },
                 body: formData
             });
@@ -175,10 +176,6 @@ class ImageUploadService {
                 } else {
                     throw new Error('Imgur upload failed: Invalid response');
                 }
-            } else if (response.status === 429) {
-                // Rate limited - try fallback
-                console.log('Rate limited, trying fallback...');
-                return await this.uploadAsDataURL(file);
             } else {
                 throw new Error(`Imgur upload failed: ${response.status} ${response.statusText}`);
             }

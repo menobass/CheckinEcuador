@@ -35,6 +35,7 @@
         <div id="jsonTest" class="result"></div>
     </div>
 
+    <script src="js/config.js"></script>
     <script src="js/hive.js"></script>
     <script>
         // Test functions
@@ -69,14 +70,30 @@
             
             result.innerHTML = '<div class="info">Testing image upload...</div>';
             
-            try {
-                const imageService = new ImageUploadService();
-                const imageUrl = await imageService.uploadImage(fileInput.files[0]);
-                
-                result.innerHTML = `<div class="success">✅ Image upload works!<br>URL: <a href="${imageUrl}" target="_blank">${imageUrl}</a></div>`;
-            } catch (error) {
+            // Use EXACTLY the same approach as working admin.html
+            const file = fileInput.files[0];
+            const IMGUR_CLIENT_ID = '4d83e353ac99be2';
+            const formData = new FormData();
+            formData.append('image', file);
+            
+            fetch('https://api.imgur.com/3/image', {
+                method: 'POST',
+                headers: {
+                    Authorization: 'Client-ID ' + IMGUR_CLIENT_ID
+                },
+                body: formData
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success && data.data && data.data.link) {
+                    result.innerHTML = `<div class="success">✅ Image upload works!<br>URL: <a href="${data.data.link}" target="_blank">${data.data.link}</a></div>`;
+                } else {
+                    result.innerHTML = '<div class="error">❌ Upload failed: Invalid response</div>';
+                }
+            })
+            .catch(error => {
                 result.innerHTML = `<div class="error">❌ Error: ${error.message}</div>`;
-            }
+            });
         }
 
         function testJSONGeneration() {
