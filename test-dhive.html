@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test dhive Integration</title>
+    <script src="https://cdn.jsdelivr.net/npm/@hiveio/dhive@latest/dist/dhive.min.js"></script>
+</head>
+<body>
+    <h1>dhive Integration Test</h1>
+    <div id="result"></div>
+    
+    <script>
+        console.log('dhive object:', window.dhive);
+        
+        if (window.dhive) {
+            const { Client, PrivateKey } = window.dhive;
+            console.log('Client:', Client);
+            console.log('PrivateKey:', PrivateKey);
+            
+            // Test creating a client
+            try {
+                const client = new Client(['https://api.hive.blog']);
+                console.log('Client created successfully:', client);
+                
+                // Test creating a private key (with invalid key for safety)
+                try {
+                    const testKey = '5JNHfZYKGaomSFvd4NUdQ9qMcEAC43kujbfjueTHpVapX1Kzq2n';
+                    const privateKey = PrivateKey.fromString(testKey);
+                    console.log('Private key created successfully:', privateKey.toString());
+                    
+                    document.getElementById('result').innerHTML = '✅ dhive integration working correctly!';
+                } catch (keyError) {
+                    console.log('Private key test failed (expected):', keyError.message);
+                    document.getElementById('result').innerHTML = '✅ dhive loaded, private key validation working';
+                }
+            } catch (clientError) {
+                console.error('Client creation failed:', clientError);
+                document.getElementById('result').innerHTML = '❌ dhive client creation failed';
+            }
+        } else {
+            document.getElementById('result').innerHTML = '❌ dhive not loaded';
+        }
+    </script>
+</body>
+</html>

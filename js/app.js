@@ -18,10 +18,16 @@ class CheckinEcuadorApp {
             this.handleLogin();
         });
 
-        // Onboarding form
-        document.getElementById('onboarding-form').addEventListener('submit', (e) => {
+        // Post to Hive button
+        document.getElementById('postToHive').addEventListener('click', (e) => {
             e.preventDefault();
-            this.handleOnboardingSubmit();
+            this.handlePostToHive();
+        });
+
+        // Generate JSON button
+        document.getElementById('generateJSON').addEventListener('click', (e) => {
+            e.preventDefault();
+            this.handleGenerateJSON();
         });
 
         // Image upload
@@ -32,6 +38,23 @@ class CheckinEcuadorApp {
         // Logout button
         document.getElementById('logout-button').addEventListener('click', () => {
             this.logout();
+        });
+
+        // Debug window controls
+        document.getElementById('closeDebug').addEventListener('click', () => {
+            this.closeDebugWindow();
+        });
+
+        document.getElementById('copyImageUrl').addEventListener('click', () => {
+            this.copyToClipboard('imageUrlDisplay');
+        });
+
+        document.getElementById('copyPostUrl').addEventListener('click', () => {
+            this.copyToClipboard('postUrlDisplay');
+        });
+
+        document.getElementById('copyTransactionId').addEventListener('click', () => {
+            this.copyToClipboard('transactionIdDisplay');
         });
     }
 
@@ -134,8 +157,9 @@ class CheckinEcuadorApp {
         // Upload image with proper Hive authentication
         try {
             if (this.currentUser && this.postingKey) {
-                // Try Hive upload (will use mock URL for now)
-                this.uploadedImageUrl = await this.imageUploadService.uploadImage(
+                console.log('Uploading with authentication...');
+                // Use debug method for detailed logging
+                this.uploadedImageUrl = await this.handleImageUploadDebug(
                     file, 
                     this.currentUser, 
                     this.postingKey
@@ -143,17 +167,16 @@ class CheckinEcuadorApp {
                 this.showImageUploadStatus('✅ Image uploaded successfully!', 'success');
                 console.log('Image URL ready:', this.uploadedImageUrl);
             } else {
-                // No credentials, create mock URL
-                const timestamp = Date.now();
-                const fileExtension = file.name.split('.').pop() || 'jpg';
-                this.uploadedImageUrl = `https://images.hive.blog/mock-${timestamp}.${fileExtension}`;
-                this.showImageUploadStatus('⚠️ Using test mode (mock URL)', 'warning');
+                // No credentials, show error
+                this.showImageUploadStatus('❌ No credentials available', 'error');
+                return;
             }
             
             // Show the image preview after upload
             this.showImagePreview(file);
             
         } catch (error) {
+            console.error('Image upload failed:', error);
             this.showImageUploadStatus('❌ Upload failed: ' + error.message, 'error');
         }
     }
@@ -183,9 +206,11 @@ class CheckinEcuadorApp {
         `;
     }
 
-    async handleOnboardingSubmit() {
+    // This method is now replaced by handlePostToHive and handleGenerateJSON
+    // Kept for backward compatibility if needed
+
+    async handlePostToHive() {
         if (!this.uploadedImageUrl) {
-            // Show error inline instead of switching screens
             this.showFormError('Please upload a selfie first');
             document.getElementById('selfie').focus();
             return;
@@ -199,11 +224,73 @@ class CheckinEcuadorApp {
             return;
         }
 
-        // Show inline loading status instead of switching screens
-        const submitButton = document.getElementById('post-button');
-        const originalText = submitButton.textContent;
-        submitButton.disabled = true;
-        submitButton.textContent = 'Generating JSON...';
+        // Show loading state
+        const postButton = document.getElementById('postToHive');
+        const originalText = postButton.textContent;
+        postButton.disabled = true;
+        postButton.textContent = 'Posting to Hive...';
+
+        try {
+            // Create post data
+            const postData = {
+                intro,
+                onboardedBy,
+                imageUrl: this.uploadedImageUrl
+            };
+
+            // Generate post content
+            const title = `I was onboarded to Hive by @${postData.onboardedBy}`;
+            const body = this.generatePostBody(postData);
+            const jsonMetadata = this.generateJsonMetadata(postData);
+            
+            // Post to Hive
+            const result = await this.hiveIntegration.postToHive(
+                this.currentUser,
+                this.postingKey,
+                title,
+                body,
+                jsonMetadata,
+                'hive-115276'
+            );
+
+            // Show success and open debug window
+            this.showFormSuccess('✅ Successfully posted to Hive!');
+            this.openDebugWindow({
+                imageUrl: this.uploadedImageUrl,
+                postUrl: result.url,
+                transactionId: result.transactionId
+            });
+
+            // Clear credentials after successful post
+            this.clearCredentials();
+
+        } catch (error) {
+            postButton.disabled = false;
+            postButton.textContent = originalText;
+            this.showFormError('Failed to post to Hive: ' + error.message);
+        }
+    }
+
+    async handleGenerateJSON() {
+        if (!this.uploadedImageUrl) {
+            this.showFormError('Please upload a selfie first');
+            document.getElementById('selfie').focus();
+            return;
+        }
+
+        const intro = document.getElementById('intro').value.trim();
+        const onboardedBy = document.getElementById('onboarded-by').value.trim();
+
+        if (!intro || !onboardedBy) {
+            this.showFormError('Please fill in all required fields');
+            return;
+        }
+
+        // Show loading state
+        const jsonButton = document.getElementById('generateJSON');
+        const originalText = jsonButton.textContent;
+        jsonButton.disabled = true;
+        jsonButton.textContent = 'Generating...';
 
         try {
             await this.createHivePost({
@@ -212,20 +299,71 @@ class CheckinEcuadorApp {
                 imageUrl: this.uploadedImageUrl
             });
 
-            // Show success message inline
-            this.showFormSuccess('✅ JSON file generated and downloaded! Check your downloads folder.');
-            this.clearCredentials();
-            
-            // Reset after success
-            setTimeout(() => {
-                this.showLoginPage();
-            }, 3000);
-            
+            // Show success and open debug window
+            this.showFormSuccess('✅ JSON file generated and downloaded!');
+            this.openDebugWindow({
+                imageUrl: this.uploadedImageUrl,
+                postUrl: null,
+                transactionId: null
+            });
+
+            // Reset button
+            jsonButton.disabled = false;
+            jsonButton.textContent = originalText;
+
         } catch (error) {
-            submitButton.disabled = false;
-            submitButton.textContent = originalText;
+            jsonButton.disabled = false;
+            jsonButton.textContent = originalText;
             this.showFormError('Failed to generate JSON: ' + error.message);
         }
+    }
+
+    openDebugWindow(data) {
+        const debugWindow = document.getElementById('debugWindow');
+        
+        // Populate debug information
+        document.getElementById('imageUrlDisplay').textContent = data.imageUrl || 'Not available';
+        document.getElementById('postUrlDisplay').textContent = data.postUrl || 'Not posted to Hive';
+        document.getElementById('transactionIdDisplay').textContent = data.transactionId || 'Not available';
+        
+        // Show debug window
+        debugWindow.style.display = 'block';
+    }
+
+    closeDebugWindow() {
+        const debugWindow = document.getElementById('debugWindow');
+        debugWindow.style.display = 'none';
+    }
+
+    async copyToClipboard(elementId) {
+        const element = document.getElementById(elementId);
+        const text = element.textContent;
+        
+        if (text && text !== 'Not available' && text !== 'Not posted to Hive') {
+            try {
+                await navigator.clipboard.writeText(text);
+                
+                // Show temporary feedback
+                const button = event.target;
+                const originalText = button.textContent;
+                button.textContent = 'Copied!';
+                button.disabled = true;
+                
+                setTimeout(() => {
+                    button.textContent = originalText;
+                    button.disabled = false;
+                }, 2000);
+                
+            } catch (error) {
+                console.error('Failed to copy to clipboard:', error);
+            }
+        }
+    }
+
+    // Update the existing method to remove the form handling
+    async handleOnboardingSubmit() {
+        // This method is now handled by the individual button handlers
+        // Keep for backward compatibility if needed
     }
 
     async createHivePost(data) {
@@ -469,6 +607,31 @@ ${data.intro}`;
         URL.revokeObjectURL(url);
         
         console.log('Post operation saved as JSON:', postingOperation);
+    }
+
+    // Add method to show detailed debug info during image upload
+    async handleImageUploadDebug(file, username, postingKey) {
+        console.log('=== Image Upload Debug ===');
+        console.log('File:', file.name, file.size, file.type);
+        console.log('Username:', username);
+        console.log('Posting key length:', postingKey.length);
+        
+        try {
+            // Step 1: Create signature
+            console.log('Step 1: Creating signature...');
+            const signature = await this.imageUploadService.createImageSignature(file, postingKey);
+            console.log('Signature created:', signature);
+            
+            // Step 2: Upload to Hive
+            console.log('Step 2: Uploading to Hive...');
+            const imageUrl = await this.imageUploadService.uploadToHiveImageService(file, username, signature);
+            console.log('Upload successful:', imageUrl);
+            
+            return imageUrl;
+        } catch (error) {
+            console.error('Upload failed:', error);
+            throw error;
+        }
     }
 }
 

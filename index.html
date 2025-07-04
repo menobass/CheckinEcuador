@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CheckinEcuador - Hive Onboarding</title>
     <link rel="stylesheet" href="styles.css">
+    <!-- Include dhive library for blockchain integration -->
+    <script src="https://cdn.jsdelivr.net/npm/@hiveio/dhive@latest/dist/dhive.min.js"></script>
 </head>
 <body>
     <!-- Login Page -->
@@ -53,7 +55,7 @@
                 </div>
             </div>
             
-            <form id="onboarding-form" class="form">
+            <div id="onboarding-form" class="form">
                 <div class="form-group">
                     <label for="selfie">Upload Selfie</label>
                     <input type="file" id="selfie" name="selfie" accept="image/*" required>
@@ -70,8 +72,36 @@
                     <input type="text" id="onboarded-by" name="onboarded-by" placeholder="Who invited you to Hive?" required>
                 </div>
                 
-                <button type="submit" id="post-button" class="btn btn-primary">Generate JSON</button>
-            </form>
+                <div class="form-actions">
+                    <button type="button" id="postToHive" class="btn btn-primary">
+                        Post to Hive
+                    </button>
+                    <button type="button" id="generateJSON" class="btn btn-secondary">
+                        Generate JSON (Test)
+                    </button>
+                </div>
+                
+                <!-- Debug window -->
+                <div id="debugWindow" class="debug-window" style="display: none;">
+                    <h3>Debug Information</h3>
+                    <div class="debug-section">
+                        <h4>Uploaded Image URL:</h4>
+                        <div id="imageUrlDisplay" class="url-display"></div>
+                        <button type="button" id="copyImageUrl" class="btn btn-small">Copy URL</button>
+                    </div>
+                    <div class="debug-section">
+                        <h4>Post URL:</h4>
+                        <div id="postUrlDisplay" class="url-display"></div>
+                        <button type="button" id="copyPostUrl" class="btn btn-small">Copy URL</button>
+                    </div>
+                    <div class="debug-section">
+                        <h4>Transaction ID:</h4>
+                        <div id="transactionIdDisplay" class="url-display"></div>
+                        <button type="button" id="copyTransactionId" class="btn btn-small">Copy ID</button>
+                    </div>
+                    <button type="button" id="closeDebug" class="btn btn-small">Close</button>
+                </div>
+            </div>
         </div>
     </div>
 

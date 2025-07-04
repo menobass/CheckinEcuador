@@ -1,6 +1,9 @@
 // Hive blockchain integration
 // This file contains the actual Hive posting functionality
 
+// Import dhive for real blockchain integration
+const { Client, PrivateKey, cryptoUtils } = window.dhive || {};
+
 class HiveIntegration {
     constructor() {
         this.apiNode = 'https://api.hive.blog';
@@ -9,6 +12,12 @@ class HiveIntegration {
             'https://anyx.io',
             'https://api.openhive.network'
         ];
+        
+        // Initialize dhive client
+        this.client = new Client([
+            this.apiNode,
+            ...this.altNodes
+        ]);
     }
 
     async validateAccount(username) {
@@ -42,12 +51,15 @@ class HiveIntegration {
                 throw new Error('Account not found');
             }
 
-            // Step 2: Basic format validation (for now)
-            // In production, you'd want full cryptographic validation
-            const isValid = this.verifyKeyPair(postingKey, null);
+            // Step 2: Validate posting key format and derive public key
+            const privateKey = PrivateKey.fromString(postingKey);
+            const publicKey = privateKey.createPublic().toString();
+
+            // Step 3: Check if the derived public key matches the account's posting key
+            const accountPostingKey = accountData.posting.key_auths[0][0];
             
-            if (!isValid) {
-                throw new Error('Invalid posting key format');
+            if (publicKey !== accountPostingKey) {
+                throw new Error('Posting key does not match account');
             }
 
             return true;
@@ -80,46 +92,85 @@ class HiveIntegration {
         }
     }
 
-    verifyKeyPair(privateKey, publicKey) {
-        // Basic format validation for testing
-        // In production, you'd need proper cryptographic validation with dhive/hive-js
-        
-        if (!privateKey || privateKey.length !== 51 || !privateKey.startsWith('5')) {
+    // Validate Hive username format
+    validateUsername(username) {
+        // Hive usernames must be 3-16 characters, lowercase, numbers, and hyphens
+        const regex = /^[a-z0-9\-]{3,16}$/;
+        return regex.test(username);
+    }
+
+    // Validate posting key format
+    validatePostingKey(postingKey) {
+        try {
+            // Check if it's a valid private key format
+            const privateKey = PrivateKey.fromString(postingKey);
+            return privateKey.toString() === postingKey;
+        } catch (error) {
             return false;
         }
-
-        // For now, we'll assume any properly formatted key is valid
-        // This allows testing without full crypto implementation
-        return true;
     }
 
     async postToHive(username, postingKey, title, body, jsonMetadata, community = null) {
-        // This is a placeholder for the actual Hive posting implementation
-        // You'll need to implement this with a proper Hive JavaScript library
-        
-        console.log('Posting to Hive:', {
-            username,
-            title,
-            body,
-            jsonMetadata,
-            community
-        });
-
-        // Simulate posting delay
-        return new Promise((resolve, reject) => {
-            setTimeout(() => {
-                // Simulate success/failure
-                if (Math.random() > 0.1) { // 90% success rate
-                    resolve({
-                        success: true,
-                        permlink: `introduction-${Date.now()}`,
-                        url: `https://hive.blog/@${username}/introduction-${Date.now()}`
-                    });
-                } else {
-                    reject(new Error('Network error or insufficient RC'));
+        try {
+            // Create private key object
+            const privateKey = PrivateKey.fromString(postingKey);
+            
+            // Generate permlink
+            const permlink = this.generatePermlink(title);
+            
+            // Create the comment operation
+            const commentOp = [
+                'comment',
+                {
+                    parent_author: '',
+                    parent_permlink: community || 'introduceyourself',
+                    author: username,
+                    permlink: permlink,
+                    title: title,
+                    body: body,
+                    json_metadata: JSON.stringify(jsonMetadata)
                 }
-            }, 2000);
-        });
+            ];
+
+            // Create beneficiaries operation
+            const beneficiariesOp = [
+                'comment_options',
+                {
+                    author: username,
+                    permlink: permlink,
+                    max_accepted_payout: '1000000.000 HBD',
+                    percent_hbd: 10000,
+                    allow_votes: true,
+                    allow_curation_rewards: true,
+                    extensions: [
+                        [0, {
+                            beneficiaries: [
+                                {
+                                    account: 'threespeakselfie',
+                                    weight: 8000
+                                }
+                            ]
+                        }]
+                    ]
+                }
+            ];
+
+            // Broadcast the operations
+            const result = await this.client.broadcast.sendOperations(
+                [commentOp, beneficiariesOp], 
+                privateKey
+            );
+
+            return {
+                success: true,
+                permlink: permlink,
+                url: `https://hive.blog/@${username}/${permlink}`,
+                transactionId: result.id
+            };
+        } catch (error) {
+            console.error('Error posting to Hive:', error);
+            throw error;
+        }
     }
 
     generatePermlink(title) {
@@ -141,40 +192,19 @@ class ImageUploadService {
 
     async uploadImage(file, username, postingKey) {
         try {
-            // For now, let's create a mock Hive image URL for testing
-            // This avoids the giant base64 string issue
             console.log('Attempting Hive image upload...');
             
-            // Try real upload first (will fail with current placeholder signature)
-            try {
-                const signature = await this.createImageSignature(file, postingKey);
-                const imageUrl = await this.uploadToHiveImageService(file, username, signature);
-                return imageUrl;
-            } catch (hiveError) {
-                console.log('Real Hive upload failed (expected with placeholder signature):', hiveError.message);
-                
-                // Return a mock Hive URL instead of base64
-                const timestamp = Date.now();
-                const fileExtension = file.name.split('.').pop() || 'jpg';
-                const mockUrl = `https://images.hive.blog/DQm${this.generateMockHash()}/${username}-selfie-${timestamp}.${fileExtension}`;
-                
-                console.log('Using mock Hive URL for testing:', mockUrl);
-                return mockUrl;
-            }
+            // Create cryptographic signature using dhive
+            const signature = await this.createImageSignature(file, postingKey);
+            
+            // Try to upload to Hive image service
+            const imageUrl = await this.uploadToHiveImageService(file, username, signature);
+            
+            return imageUrl;
         } catch (error) {
             console.error('Image upload error:', error);
             throw new Error('Failed to upload image: ' + error.message);
         }
-    }
-
-    generateMockHash() {
-        // Generate a mock IPFS-style hash for testing
-        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-        let result = '';
-        for (let i = 0; i < 46; i++) {
-            result += chars.charAt(Math.floor(Math.random() * chars.length));
-        }
-        return result;
     }
 
     async createImageSignature(file, postingKey) {
@@ -182,7 +212,7 @@ class ImageUploadService {
             // Read file as array buffer
             const fileBuffer = await this.fileToArrayBuffer(file);
             
-            // Create the challenge hash as per Hive spec
+            // Create the challenge string as per Hive spec
             const challenge = 'ImageSigningChallenge';
             const challengeBuffer = new TextEncoder().encode(challenge);
             
@@ -194,23 +224,55 @@ class ImageUploadService {
             // Create SHA256 hash
             const hashBuffer = await crypto.subtle.digest('SHA-256', combined);
             
-            // For now, we'll return a placeholder signature
-            // In production, you'd need a proper crypto library to sign with the posting key
-            return this.createPlaceholderSignature(hashBuffer, postingKey);
+            // Use dhive to create proper signature
+            const privateKey = PrivateKey.fromString(postingKey);
+            const signature = privateKey.sign(new Uint8Array(hashBuffer));
+            
+            return signature.toString();
             
         } catch (error) {
             throw new Error('Failed to create signature: ' + error.message);
         }
     }
 
-    createPlaceholderSignature(hashBuffer, postingKey) {
-        // This is a placeholder - in production you'd need dhive or similar library
-        // to properly sign the hash with the posting key
-        const hashArray = Array.from(new Uint8Array(hashBuffer));
-        const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-        
-        // Placeholder signature format (this won't work for real uploads)
-        return `SIG_K1_${hashHex.substring(0, 50)}${postingKey.substring(40, 45)}`;
+    async uploadToHiveImageService(file, username, signature) {
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+            // Try primary endpoint first
+            const response = await fetch(`${this.uploadEndpoint}/${username}/${signature}`, {
+                method: 'POST',
+                body: formData
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                return result.url;
+            } else {
+                throw new Error(`Upload failed with status: ${response.status}`);
+            }
+        } catch (error) {
+            console.error('Primary upload failed:', error);
+            
+            // Try alternative endpoint
+            try {
+                const response = await fetch(`${this.altEndpoint}/upload`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    return result.url;
+                } else {
+                    throw new Error(`Alt upload failed with status: ${response.status}`);
+                }
+            } catch (altError) {
+                console.error('Alternative upload failed:', altError);
+                throw new Error('Both image upload services failed');
+            }
+        }
     }
 
     async fileToArrayBuffer(file) {
