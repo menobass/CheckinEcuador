@@ -224,9 +224,13 @@ class ImageUploadService {
             // Create SHA256 hash
             const hashBuffer = await crypto.subtle.digest('SHA-256', combined);
             
+            // Convert to Buffer for dhive compatibility
+            const hashArray = new Uint8Array(hashBuffer);
+            const messageBuffer = Buffer.from(hashArray);
+            
             // Use dhive to create proper signature
             const privateKey = PrivateKey.fromString(postingKey);
-            const signature = privateKey.sign(new Uint8Array(hashBuffer));
+            const signature = privateKey.sign(messageBuffer);
             
             return signature.toString();
             

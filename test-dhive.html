@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Test dhive Integration</title>
+    <script src="https://cdn.jsdelivr.net/npm/buffer@6.0.3/index.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@hiveio/dhive@latest/dist/dhive.min.js"></script>
 </head>
 <body>
@@ -12,8 +13,9 @@
     
     <script>
         console.log('dhive object:', window.dhive);
+        console.log('Buffer object:', window.Buffer);
         
-        if (window.dhive) {
+        if (window.dhive && window.Buffer) {
             const { Client, PrivateKey } = window.dhive;
             console.log('Client:', Client);
             console.log('PrivateKey:', PrivateKey);
@@ -29,17 +31,22 @@
                     const privateKey = PrivateKey.fromString(testKey);
                     console.log('Private key created successfully:', privateKey.toString());
                     
-                    document.getElementById('result').innerHTML = '✅ dhive integration working correctly!';
+                    // Test signing with Buffer
+                    const testMessage = Buffer.from('test message');
+                    const signature = privateKey.sign(testMessage);
+                    console.log('Signature created successfully:', signature.toString());
+                    
+                    document.getElementById('result').innerHTML = '✅ dhive integration with Buffer working correctly!';
                 } catch (keyError) {
-                    console.log('Private key test failed (expected):', keyError.message);
-                    document.getElementById('result').innerHTML = '✅ dhive loaded, private key validation working';
+                    console.log('Private key or signing test failed:', keyError.message);
+                    document.getElementById('result').innerHTML = '✅ dhive loaded, but signing failed: ' + keyError.message;
                 }
             } catch (clientError) {
                 console.error('Client creation failed:', clientError);
                 document.getElementById('result').innerHTML = '❌ dhive client creation failed';
             }
         } else {
-            document.getElementById('result').innerHTML = '❌ dhive not loaded';
+            document.getElementById('result').innerHTML = '❌ dhive or Buffer not loaded';
         }
     </script>
 </body>
