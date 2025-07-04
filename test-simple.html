@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CheckinEcuador - Quick Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; }
+        .test-section { margin: 20px 0; padding: 20px; border: 1px solid #ddd; }
+        .result { margin: 10px 0; padding: 10px; border-radius: 4px; }
+        .success { background-color: #d4edda; color: #155724; }
+        .error { background-color: #f8d7da; color: #721c24; }
+        .info { background-color: #d1ecf1; color: #0c5460; }
+    </style>
+</head>
+<body>
+    <h1>CheckinEcuador - Quick Test</h1>
+    
+    <div class="test-section">
+        <h2>Test 1: Hive Account Validation</h2>
+        <button onclick="testAccountValidation()">Test Account Validation</button>
+        <div id="accountTest" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 2: Imgur Upload Service</h2>
+        <input type="file" id="testImage" accept="image/*">
+        <button onclick="testImageUpload()">Test Image Upload</button>
+        <div id="imageTest" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 3: JSON Generation</h2>
+        <button onclick="testJSONGeneration()">Test JSON Generation</button>
+        <div id="jsonTest" class="result"></div>
+    </div>
+
+    <script src="js/hive.js"></script>
+    <script>
+        // Test functions
+        async function testAccountValidation() {
+            const result = document.getElementById('accountTest');
+            result.innerHTML = '<div class="info">Testing account validation...</div>';
+            
+            try {
+                const hive = new HiveIntegration();
+                
+                // Test with a known account
+                const isValid = await hive.validateAccount('hiveio');
+                
+                if (isValid) {
+                    result.innerHTML = '<div class="success">✅ Account validation works! Found @hiveio account.</div>';
+                } else {
+                    result.innerHTML = '<div class="error">❌ Account validation failed.</div>';
+                }
+            } catch (error) {
+                result.innerHTML = `<div class="error">❌ Error: ${error.message}</div>`;
+            }
+        }
+
+        async function testImageUpload() {
+            const result = document.getElementById('imageTest');
+            const fileInput = document.getElementById('testImage');
+            
+            if (!fileInput.files.length) {
+                result.innerHTML = '<div class="error">Please select an image first.</div>';
+                return;
+            }
+            
+            result.innerHTML = '<div class="info">Testing image upload...</div>';
+            
+            try {
+                const imageService = new ImageUploadService();
+                const imageUrl = await imageService.uploadImage(fileInput.files[0]);
+                
+                result.innerHTML = `<div class="success">✅ Image upload works!<br>URL: <a href="${imageUrl}" target="_blank">${imageUrl}</a></div>`;
+            } catch (error) {
+                result.innerHTML = `<div class="error">❌ Error: ${error.message}</div>`;
+            }
+        }
+
+        function testJSONGeneration() {
+            const result = document.getElementById('jsonTest');
+            
+            try {
+                const hive = new HiveIntegration();
+                const permlink = hive.generatePermlink('My Test Introduction Post');
+                
+                const operations = hive.generatePostingOperation(
+                    'testuser',
+                    'My Test Introduction Post',
+                    'This is a test introduction post.',
+                    {
+                        app: 'CheckinEcuador',
+                        format: 'markdown',
+                        tags: ['introduceyourself', 'checkinwith', 'hive'],
+                        image: ['https://i.imgur.com/example.jpg'],
+                        location: { country: 'Ecuador', city: 'Test City' },
+                        timestamp: new Date().toISOString()
+                    },
+                    permlink
+                );
+                
+                result.innerHTML = `<div class="success">✅ JSON generation works!<br><pre>${JSON.stringify(operations, null, 2)}</pre></div>`;
+            } catch (error) {
+                result.innerHTML = `<div class="error">❌ Error: ${error.message}</div>`;
+            }
+        }
+    </script>
+</body>
+</html>

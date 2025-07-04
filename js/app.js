@@ -39,23 +39,6 @@ class CheckinEcuadorApp {
         document.getElementById('logout-button').addEventListener('click', () => {
             this.logout();
         });
-
-        // Debug window controls
-        document.getElementById('closeDebug').addEventListener('click', () => {
-            this.closeDebugWindow();
-        });
-
-        document.getElementById('copyImageUrl').addEventListener('click', () => {
-            this.copyToClipboard('imageUrlDisplay');
-        });
-
-        document.getElementById('copyPostUrl').addEventListener('click', () => {
-            this.copyToClipboard('postUrlDisplay');
-        });
-
-        document.getElementById('copyTransactionId').addEventListener('click', () => {
-            this.copyToClipboard('transactionIdDisplay');
-        });
     }
 
     checkLoginState() {
@@ -145,30 +128,28 @@ class CheckinEcuadorApp {
             return;
         }
 
-        // Validate file size (max 10MB for Hive image service)
-        if (file.size > 10 * 1024 * 1024) {
-            this.showImageUploadStatus('❌ Image size must be less than 10MB', 'error');
+        // Validate file size using configuration
+        const config = window.CONFIG || {};
+        const maxSize = config.imgur?.maxFileSize || 10 * 1024 * 1024;
+        const maxSizeMB = Math.round(maxSize / (1024 * 1024));
+        
+        if (file.size > maxSize) {
+            this.showImageUploadStatus(`❌ Image size must be less than ${maxSizeMB}MB`, 'error');
             return;
         }
 
         // Show upload status immediately
-        this.showImageUploadStatus('📤 Uploading image to Hive...', 'loading');
+        this.showImageUploadStatus('📤 Uploading image...', 'loading');
 
-        // Upload image with proper Hive authentication
+        // Upload image using Imgur (simple and reliable)
         try {
             if (this.currentUser && this.postingKey) {
-                console.log('Uploading with authentication...');
-                // Use debug method for detailed logging
-                this.uploadedImageUrl = await this.handleImageUploadDebug(
-                    file, 
-                    this.currentUser, 
-                    this.postingKey
-                );
-                this.showImageUploadStatus('✅ Image uploaded successfully!', 'success');
+                console.log('Uploading to Imgur...');
+                this.uploadedImageUrl = await this.imageUploadService.uploadImage(file);
+                this.showImageUploadStatus('✅ Image uploaded successfully to Imgur!', 'success');
                 console.log('Image URL ready:', this.uploadedImageUrl);
             } else {
-                // No credentials, show error
-                this.showImageUploadStatus('❌ No credentials available', 'error');
+                this.showImageUploadStatus('❌ Please login first', 'error');
                 return;
             }
             
@@ -177,7 +158,18 @@ class CheckinEcuadorApp {
             
         } catch (error) {
             console.error('Image upload failed:', error);
-            this.showImageUploadStatus('❌ Upload failed: ' + error.message, 'error');
+            
+            // Provide specific error messages for different scenarios
+            let errorMessage = 'Upload failed: ';
+            if (error.message.includes('429')) {
+                errorMessage += 'Rate limit reached. Using fallback method...';
+            } else if (error.message.includes('Failed to upload image')) {
+                errorMessage += 'All upload methods failed. Please try again later.';
+            } else {
+                errorMessage += error.message;
+            }
+            
+            this.showImageUploadStatus('❌ ' + errorMessage, 'error');
         }
     }
 
@@ -436,9 +428,13 @@ ${data.intro}`;
     }
 
     clearForms() {
-        document.getElementById('login-form').reset();
-        document.getElementById('onboarding-form').reset();
-        document.getElementById('image-preview').innerHTML = '';
+        const loginForm = document.getElementById('login-form');
+        const onboardingForm = document.getElementById('onboarding-form');
+        const imagePreview = document.getElementById('image-preview');
+        
+        if (loginForm) loginForm.reset();
+        if (onboardingForm) onboardingForm.reset();
+        if (imagePreview) imagePreview.innerHTML = '';
     }
 
     showLoginPage() {

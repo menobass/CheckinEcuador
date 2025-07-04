@@ -5,61 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CheckinEcuador - Hive Onboarding</title>
     <link rel="stylesheet" href="styles.css">
-    <!-- Enhanced Buffer polyfill -->
-    <script>
-        // Enhanced Buffer polyfill for dhive compatibility
-        if (typeof Buffer === 'undefined') {
-            window.Buffer = {
-                from: function(data) {
-                    let buffer;
-                    
-                    if (data instanceof Uint8Array) {
-                        buffer = new Uint8Array(data);
-                    } else if (typeof data === 'string') {
-                        const encoder = new TextEncoder();
-                        buffer = encoder.encode(data);
-                    } else if (Array.isArray(data)) {
-                        buffer = new Uint8Array(data);
-                    } else {
-                        buffer = new Uint8Array(data);
-                    }
-                    
-                    // Add Buffer-specific properties and methods that dhive expects
-                    Object.defineProperty(buffer, 'constructor', {
-                        value: { name: 'Buffer' },
-                        writable: false
-                    });
-                    
-                    // Add methods that dhive might use for validation
-                    buffer.slice = function(start, end) {
-                        return Buffer.from(Uint8Array.prototype.slice.call(this, start, end));
-                    };
-                    
-                    buffer.toString = function(encoding) {
-                        if (encoding === 'hex') {
-                            return Array.from(this).map(b => b.toString(16).padStart(2, '0')).join('');
-                        }
-                        return Array.from(this).map(b => String.fromCharCode(b)).join('');
-                    };
-                    
-                    // Add Buffer validation property that dhive checks
-                    Object.defineProperty(buffer, '_isBuffer', {
-                        value: true,
-                        writable: false
-                    });
-                    
-                    return buffer;
-                },
-                
-                // Add isBuffer method that dhive uses for validation
-                isBuffer: function(obj) {
-                    return obj && obj._isBuffer === true;
-                }
-            };
-        }
-    </script>
-    <!-- Include dhive library for blockchain integration -->
-    <script src="https://cdn.jsdelivr.net/npm/@hiveio/dhive@latest/dist/dhive.min.js"></script>
 </head>
 <body>
     <!-- Login Page -->
@@ -133,31 +78,11 @@
                         Generate JSON (Test)
                     </button>
                 </div>
-                
-                <!-- Debug window -->
-                <div id="debugWindow" class="debug-window" style="display: none;">
-                    <h3>Debug Information</h3>
-                    <div class="debug-section">
-                        <h4>Uploaded Image URL:</h4>
-                        <div id="imageUrlDisplay" class="url-display"></div>
-                        <button type="button" id="copyImageUrl" class="btn btn-small">Copy URL</button>
-                    </div>
-                    <div class="debug-section">
-                        <h4>Post URL:</h4>
-                        <div id="postUrlDisplay" class="url-display"></div>
-                        <button type="button" id="copyPostUrl" class="btn btn-small">Copy URL</button>
-                    </div>
-                    <div class="debug-section">
-                        <h4>Transaction ID:</h4>
-                        <div id="transactionIdDisplay" class="url-display"></div>
-                        <button type="button" id="copyTransactionId" class="btn btn-small">Copy ID</button>
-                    </div>
-                    <button type="button" id="closeDebug" class="btn btn-small">Close</button>
-                </div>
             </div>
         </div>
     </div>
 
+    <script src="js/config.js"></script>
     <script src="js/hive.js"></script>
     <script src="js/app.js"></script>
 </body>

@@ -1,7 +1,7 @@
 {
   "name": "checkinecuador",
   "version": "1.0.0",
-  "description": "Simple and reliable Hive onboarding app",
+  "description": "Static Hive onboarding app with Imgur image uploads - works on all devices",
   "main": "index.html",
   "scripts": {
     "start": "node server.js",
@@ -18,7 +18,6 @@
   "author": "CheckinEcuador Team",
   "license": "MIT",
   "dependencies": {
-    "@hiveio/dhive": "^1.3.2"
   },
   "devDependencies": {
     "http-server": "^14.1.1",
