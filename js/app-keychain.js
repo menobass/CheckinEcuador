@@ -74,14 +74,15 @@ class CheckinEcuadorApp {
         statusDiv.innerHTML = '<div class="info">Requesting Keychain authentication...</div>';
 
         try {
-            // Request account info to verify the user exists and keychain works
-            window.hive_keychain.requestVerifyKey(username, 'Hello from CheckinEcuador!', 'Posting', (response) => {
+            // Use requestSignBuffer for login authentication
+            const loginMessage = `Login to CheckinEcuador at ${Date.now()}`;
+            window.hive_keychain.requestSignBuffer(username, loginMessage, 'Posting', (response) => {
                 if (response.success) {
                     this.currentUser = username;
                     this.showPostingPage();
                     statusDiv.innerHTML = '<div class="success">✅ Successfully logged in with Keychain!</div>';
                 } else {
-                    statusDiv.innerHTML = `<div class="error">❌ Keychain authentication failed: ${response.message}</div>`;
+                    statusDiv.innerHTML = `<div class="error">❌ Keychain authentication failed: ${response.message || 'Unknown error'}</div>`;
                     loginBtn.disabled = false;
                     loginBtn.textContent = 'Login with Keychain';
                 }
@@ -208,20 +209,21 @@ class CheckinEcuadorApp {
 
             // Use Keychain to post
             window.hive_keychain.requestPost(
-                this.currentUser,
-                title,
-                body,
-                'hive-115276', // parent_permlink (community)
-                JSON.stringify(jsonMetadata),
-                permlink,
-                commentOptions,
+                this.currentUser,        // account
+                title,                   // title
+                body,                    // body
+                'hive-115276',          // parent_permlink (community)
+                '',                     // parent_account (empty for root post)
+                jsonMetadata,           // json_metadata (object, not string)
+                permlink,               // permlink
+                commentOptions,         // comment_options
                 (response) => {
                     if (response.success) {
                         this.showFormSuccess('✅ Successfully posted to Hive!');
                         this.showPostSuccess(response.result);
                         this.resetForm();
                     } else {
-                        this.showFormError('Failed to post: ' + response.message);
+                        this.showFormError('Failed to post: ' + (response.message || 'Unknown error'));
                     }
                     
                     postButton.disabled = false;
