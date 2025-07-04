@@ -235,7 +235,7 @@ class CheckinEcuadorApp {
                 '',                     // parent_account (empty for root post)
                 JSON.stringify(jsonMetadata), // json_metadata (must be string!)
                 permlink,               // permlink
-                commentOptions,         // comment_options
+                JSON.stringify(commentOptions), // comment_options (must be string too!)
                 (response) => {
                     if (response.success) {
                         this.showFormSuccess('✅ Successfully posted to Hive!');
