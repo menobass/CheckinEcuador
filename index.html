@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CheckinEcuador - Hive Onboarding</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Login Page -->
+    <div id="login-page" class="page">
+        <div class="container">
+            <div class="header">
+                <h1>CheckinEcuador</h1>
+                <p>Hive Onboarding App</p>
+            </div>
+            
+            <form id="login-form" class="form">
+                <div class="form-group">
+                    <label for="username">Hive Username</label>
+                    <input type="text" id="username" name="username" placeholder="Enter your Hive username" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="posting-key">Posting Key</label>
+                    <input type="password" id="posting-key" name="posting-key" placeholder="Enter your posting key" required>
+                </div>
+                
+                <button type="submit" class="btn btn-primary">Login & Verify</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Posting Page -->
+    <div id="posting-page" class="page hidden">
+        <div class="page-header">
+            <div class="container">
+                <div class="page-header-content">
+                    <div class="page-title">
+                        <h1>Create Your Introduction Post</h1>
+                        <p>Share your story with the Hive community</p>
+                    </div>
+                    <button id="logout-button" class="btn btn-secondary">Logout</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="container">
+            <div class="verification-banner">
+                <div class="banner-content">
+                    <span class="banner-icon">✅</span>
+                    <span class="banner-text">Verified: <span id="current-username"></span></span>
+                </div>
+            </div>
+            
+            <form id="onboarding-form" class="form">
+                <div class="form-group">
+                    <label for="selfie">Upload Selfie</label>
+                    <input type="file" id="selfie" name="selfie" accept="image/*" required>
+                    <div id="image-preview"></div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="intro">Introduction Text</label>
+                    <textarea id="intro" name="intro" placeholder="Tell us about yourself..." required></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="onboarded-by">Onboarded by (username)</label>
+                    <input type="text" id="onboarded-by" name="onboarded-by" placeholder="Who invited you to Hive?" required>
+                </div>
+                
+                <button type="submit" id="post-button" class="btn btn-primary">Generate JSON</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="js/hive.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
