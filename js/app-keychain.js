@@ -41,8 +41,27 @@ class CheckinEcuadorApp {
     checkKeychainAvailability() {
         const statusDiv = document.getElementById('keychain-status');
         
-        if (window.hive_keychain) {
+        // Check immediately
+        this.updateKeychainStatus(statusDiv);
+        
+        // Also check after a delay (like the working test)
+        setTimeout(() => {
+            this.updateKeychainStatus(statusDiv);
+        }, 1000);
+    }
+    
+    updateKeychainStatus(statusDiv) {
+        if (typeof window.hive_keychain !== 'undefined' && window.hive_keychain) {
             statusDiv.innerHTML = '<div class="success">✅ Hive Keychain detected! Ready to login.</div>';
+            
+            // Test handshake like the working test
+            try {
+                window.hive_keychain.requestHandshake(() => {
+                    console.log('Keychain handshake successful');
+                });
+            } catch (e) {
+                console.log('Keychain handshake error:', e);
+            }
         } else {
             statusDiv.innerHTML = `
                 <div class="error">
