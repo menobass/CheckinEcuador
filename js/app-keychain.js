@@ -12,8 +12,15 @@ class CheckinEcuadorApp {
     }
 
     setupEventListeners() {
-        // Keychain login
-        document.getElementById('keychain-login-btn').addEventListener('click', () => {
+        // Keychain login            app: 'checkinecuador/1.0.0',
+            username: this.currentUser,
+            image: [data.imageUrl],
+            country: 'Ecuador',
+            onboarder: data.onboardedBy,
+            introductionText: data.intro,
+            communityName: 'hive-115276',
+            lightningAddress: lightningAddress,
+            developer: 'menobass' document.getElementById('keychain-login-btn').addEventListener('click', () => {
             this.loginWithKeychain();
         });
 
@@ -361,7 +368,7 @@ class CheckinEcuadorApp {
         
         const jsonMetadata = {
             tags: ['introduceyourself', 'checkin'],
-            app: 'checkinwithxyz/1.0.0',
+            app: 'checkinecuador/1.0.0',
             username: this.currentUser,
             image: [data.imageUrl],
             country: 'Ecuador',
@@ -369,7 +376,7 @@ class CheckinEcuadorApp {
             introductionText: data.intro,
             communityName: 'hive-115276',
             lightningAddress: `${this.currentUser}@sats.v4v.app`,
-            developer: 'sagarkothari88'
+            developer: 'menobass'
         };
 
         return { title, body, jsonMetadata, permlink };
