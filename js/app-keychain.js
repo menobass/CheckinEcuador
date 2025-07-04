@@ -233,7 +233,7 @@ class CheckinEcuadorApp {
                 body,                    // body
                 'hive-115276',          // parent_permlink (community)
                 '',                     // parent_account (empty for root post)
-                jsonMetadata,           // json_metadata (object, not string)
+                JSON.stringify(jsonMetadata), // json_metadata (must be string!)
                 permlink,               // permlink
                 commentOptions,         // comment_options
                 (response) => {
