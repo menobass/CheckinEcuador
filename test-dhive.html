@@ -4,7 +4,35 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Test dhive Integration</title>
-    <script src="https://cdn.jsdelivr.net/npm/buffer@6.0.3/index.js"></script>
+    <script>
+        // Simple Buffer polyfill
+        if (typeof Buffer === 'undefined') {
+            window.Buffer = {
+                from: function(data) {
+                    if (data instanceof Uint8Array) {
+                        const buffer = new Uint8Array(data);
+                        buffer.constructor = { name: 'Buffer' };
+                        buffer.slice = function(start, end) {
+                            return new Uint8Array(this.slice(start, end));
+                        };
+                        buffer.toString = function(encoding) {
+                            if (encoding === 'hex') {
+                                return Array.from(this).map(b => b.toString(16).padStart(2, '0')).join('');
+                            }
+                            return Array.from(this).map(b => String.fromCharCode(b)).join('');
+                        };
+                        return buffer;
+                    }
+                    if (typeof data === 'string') {
+                        const encoder = new TextEncoder();
+                        const uint8Array = encoder.encode(data);
+                        return Buffer.from(uint8Array);
+                    }
+                    return new Uint8Array(data);
+                }
+            };
+        }
+    </script>
     <script src="https://cdn.jsdelivr.net/npm/@hiveio/dhive@latest/dist/dhive.min.js"></script>
 </head>
 <body>

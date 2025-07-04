@@ -5,8 +5,35 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CheckinEcuador - Hive Onboarding</title>
     <link rel="stylesheet" href="styles.css">
-    <!-- Include buffer polyfill for browser compatibility -->
-    <script src="https://cdn.jsdelivr.net/npm/buffer@6.0.3/index.js"></script>
+    <!-- Simple Buffer polyfill -->
+    <script>
+        if (typeof Buffer === 'undefined') {
+            window.Buffer = {
+                from: function(data) {
+                    if (data instanceof Uint8Array) {
+                        const buffer = new Uint8Array(data);
+                        buffer.constructor = { name: 'Buffer' };
+                        buffer.slice = function(start, end) {
+                            return new Uint8Array(this.slice(start, end));
+                        };
+                        buffer.toString = function(encoding) {
+                            if (encoding === 'hex') {
+                                return Array.from(this).map(b => b.toString(16).padStart(2, '0')).join('');
+                            }
+                            return Array.from(this).map(b => String.fromCharCode(b)).join('');
+                        };
+                        return buffer;
+                    }
+                    if (typeof data === 'string') {
+                        const encoder = new TextEncoder();
+                        const uint8Array = encoder.encode(data);
+                        return Buffer.from(uint8Array);
+                    }
+                    return new Uint8Array(data);
+                }
+            };
+        }
+    </script>
     <!-- Include dhive library for blockchain integration -->
     <script src="https://cdn.jsdelivr.net/npm/@hiveio/dhive@latest/dist/dhive.min.js"></script>
 </head>

@@ -228,6 +228,10 @@ class ImageUploadService {
             const hashArray = new Uint8Array(hashBuffer);
             const messageBuffer = Buffer.from(hashArray);
             
+            console.log('Buffer created:', messageBuffer);
+            console.log('Buffer type:', typeof messageBuffer);
+            console.log('Buffer constructor:', messageBuffer.constructor.name);
+            
             // Use dhive to create proper signature
             const privateKey = PrivateKey.fromString(postingKey);
             const signature = privateKey.sign(messageBuffer);
@@ -235,6 +239,7 @@ class ImageUploadService {
             return signature.toString();
             
         } catch (error) {
+            console.error('Signature creation error:', error);
             throw new Error('Failed to create signature: ' + error.message);
         }
     }
