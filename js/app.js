@@ -150,8 +150,7 @@ class CheckinEcuadorApp {
             method: 'POST',
             headers: {
                 'Authorization': 'Client-ID ' + IMGUR_CLIENT_ID,
-                'Accept': 'application/json',
-                'Cache-Control': 'no-cache'
+                'Accept': 'application/json'
             },
             body: formData
         })
