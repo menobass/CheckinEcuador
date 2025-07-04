@@ -231,6 +231,9 @@ class ImageUploadService {
             console.log('Buffer created:', messageBuffer);
             console.log('Buffer type:', typeof messageBuffer);
             console.log('Buffer constructor:', messageBuffer.constructor.name);
+            console.log('Is Buffer?', Buffer.isBuffer(messageBuffer));
+            console.log('Has _isBuffer?', messageBuffer._isBuffer);
+            console.log('Buffer length:', messageBuffer.length);
             
             // Use dhive to create proper signature
             const privateKey = PrivateKey.fromString(postingKey);

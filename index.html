@@ -5,31 +5,55 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CheckinEcuador - Hive Onboarding</title>
     <link rel="stylesheet" href="styles.css">
-    <!-- Simple Buffer polyfill -->
+    <!-- Enhanced Buffer polyfill -->
     <script>
+        // Enhanced Buffer polyfill for dhive compatibility
         if (typeof Buffer === 'undefined') {
             window.Buffer = {
                 from: function(data) {
+                    let buffer;
+                    
                     if (data instanceof Uint8Array) {
-                        const buffer = new Uint8Array(data);
-                        buffer.constructor = { name: 'Buffer' };
-                        buffer.slice = function(start, end) {
-                            return new Uint8Array(this.slice(start, end));
-                        };
-                        buffer.toString = function(encoding) {
-                            if (encoding === 'hex') {
-                                return Array.from(this).map(b => b.toString(16).padStart(2, '0')).join('');
-                            }
-                            return Array.from(this).map(b => String.fromCharCode(b)).join('');
-                        };
-                        return buffer;
-                    }
-                    if (typeof data === 'string') {
+                        buffer = new Uint8Array(data);
+                    } else if (typeof data === 'string') {
                         const encoder = new TextEncoder();
-                        const uint8Array = encoder.encode(data);
-                        return Buffer.from(uint8Array);
+                        buffer = encoder.encode(data);
+                    } else if (Array.isArray(data)) {
+                        buffer = new Uint8Array(data);
+                    } else {
+                        buffer = new Uint8Array(data);
                     }
-                    return new Uint8Array(data);
+                    
+                    // Add Buffer-specific properties and methods that dhive expects
+                    Object.defineProperty(buffer, 'constructor', {
+                        value: { name: 'Buffer' },
+                        writable: false
+                    });
+                    
+                    // Add methods that dhive might use for validation
+                    buffer.slice = function(start, end) {
+                        return Buffer.from(Uint8Array.prototype.slice.call(this, start, end));
+                    };
+                    
+                    buffer.toString = function(encoding) {
+                        if (encoding === 'hex') {
+                            return Array.from(this).map(b => b.toString(16).padStart(2, '0')).join('');
+                        }
+                        return Array.from(this).map(b => String.fromCharCode(b)).join('');
+                    };
+                    
+                    // Add Buffer validation property that dhive checks
+                    Object.defineProperty(buffer, '_isBuffer', {
+                        value: true,
+                        writable: false
+                    });
+                    
+                    return buffer;
+                },
+                
+                // Add isBuffer method that dhive uses for validation
+                isBuffer: function(obj) {
+                    return obj && obj._isBuffer === true;
                 }
             };
         }
