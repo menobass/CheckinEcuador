@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Keychain Test - CheckinEcuador</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; background: #f5f5f5; }
+        .test-container { max-width: 600px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; }
+        .status { padding: 15px; margin: 15px 0; border-radius: 5px; }
+        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        button { padding: 10px 20px; margin: 10px 5px; border: none; border-radius: 4px; cursor: pointer; }
+        .btn-primary { background: #007bff; color: white; }
+        .btn-primary:hover { background: #0056b3; }
+        .btn-secondary { background: #6c757d; color: white; }
+        .btn-secondary:hover { background: #545b62; }
+        input { padding: 8px; margin: 5px; border: 1px solid #ddd; border-radius: 4px; }
+        h1 { color: #333; }
+        .keychain-info { background: #e9ecef; padding: 20px; margin: 20px 0; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🔐 Hive Keychain Test</h1>
+        
+        <div class="keychain-info">
+            <h3>About This Test</h3>
+            <p>This page tests Hive Keychain integration for CheckinEcuador. Make sure you have Hive Keychain installed and are using the Keychain browser.</p>
+        </div>
+        
+        <div id="keychain-status" class="status info">
+            Checking for Hive Keychain...
+        </div>
+        
+        <div style="margin: 20px 0;">
+            <input type="text" id="testUsername" placeholder="Enter your Hive username" style="width: 200px;">
+            <button onclick="testKeychainLogin()" class="btn-primary">Test Keychain Login</button>
+        </div>
+        
+        <div style="margin: 20px 0;">
+            <button onclick="testKeychainPost()" class="btn-secondary">Test Keychain Post</button>
+        </div>
+        
+        <div id="test-results"></div>
+    </div>
+
+    <script>
+        // Check if Keychain is available
+        function checkKeychain() {
+            const statusDiv = document.getElementById('keychain-status');
+            
+            if (window.hive_keychain) {
+                statusDiv.className = 'status success';
+                statusDiv.innerHTML = '✅ Hive Keychain detected! You can proceed with testing.';
+                return true;
+            } else {
+                statusDiv.className = 'status error';
+                statusDiv.innerHTML = `
+                    ⚠️ Hive Keychain not detected. 
+                    <br>Please install Hive Keychain or use the Keychain browser.
+                    <br><a href="https://hive-keychain.com" target="_blank">Get Hive Keychain</a>
+                `;
+                return false;
+            }
+        }
+
+        function testKeychainLogin() {
+            const username = document.getElementById('testUsername').value.trim();
+            const resultsDiv = document.getElementById('test-results');
+            
+            if (!username) {
+                resultsDiv.innerHTML = '<div class="status error">Please enter a username first.</div>';
+                return;
+            }
+
+            if (!checkKeychain()) {
+                resultsDiv.innerHTML = '<div class="status error">Keychain not available.</div>';
+                return;
+            }
+
+            resultsDiv.innerHTML = '<div class="status info">Requesting Keychain authentication...</div>';
+
+            window.hive_keychain.requestVerifyKey(username, 'Test message from CheckinEcuador', 'Posting', (response) => {
+                if (response.success) {
+                    resultsDiv.innerHTML = `
+                        <div class="status success">
+                            ✅ Keychain authentication successful!
+                            <br><strong>Username:</strong> ${username}
+                            <br><strong>Response:</strong> ${JSON.stringify(response.result, null, 2)}
+                        </div>
+                    `;
+                } else {
+                    resultsDiv.innerHTML = `
+                        <div class="status error">
+                            ❌ Keychain authentication failed: ${response.message}
+                            <br><strong>Error:</strong> ${response.error || 'Unknown error'}
+                        </div>
+                    `;
+                }
+            });
+        }
+
+        function testKeychainPost() {
+            const username = document.getElementById('testUsername').value.trim();
+            const resultsDiv = document.getElementById('test-results');
+            
+            if (!username) {
+                resultsDiv.innerHTML = '<div class="status error">Please enter a username first.</div>';
+                return;
+            }
+
+            if (!checkKeychain()) {
+                resultsDiv.innerHTML = '<div class="status error">Keychain not available.</div>';
+                return;
+            }
+
+            resultsDiv.innerHTML = '<div class="status info">Testing Keychain posting (this will create a test post)...</div>';
+
+            const title = 'Test Post from CheckinEcuador';
+            const body = 'This is a test post to verify Keychain integration works.';
+            const permlink = 'checkinecuador-test-' + Date.now();
+            const jsonMetadata = {
+                tags: ['test', 'checkinecuador'],
+                app: 'checkinwithxyz/1.0.0'
+            };
+
+            window.hive_keychain.requestPost(
+                username,
+                title,
+                body,
+                '', // parent_permlink (empty for root post)
+                JSON.stringify(jsonMetadata),
+                permlink,
+                '', // comment_options (empty for simple post)
+                (response) => {
+                    if (response.success) {
+                        resultsDiv.innerHTML = `
+                            <div class="status success">
+                                ✅ Test post successful!
+                                <br><strong>Transaction ID:</strong> ${response.result.id}
+                                <br><strong>Post URL:</strong> <a href="https://peakd.com/@${username}/${permlink}" target="_blank">View on PeakD</a>
+                            </div>
+                        `;
+                    } else {
+                        resultsDiv.innerHTML = `
+                            <div class="status error">
+                                ❌ Test post failed: ${response.message}
+                                <br><strong>Error:</strong> ${response.error || 'Unknown error'}
+                            </div>
+                        `;
+                    }
+                }
+            );
+        }
+
+        // Check keychain on page load
+        document.addEventListener('DOMContentLoaded', checkKeychain);
+    </script>
+</body>
+</html>
