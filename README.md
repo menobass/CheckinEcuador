@@ -1,15 +1,15 @@
 # CheckinEcuador - Hive Onboarding App
 
-A JavaScript web application for onboarding new users to the Hive blockchain, specifically designed for the Ecuador community. This app creates introduction posts with proper metadata to ensure seamless integration with the Hive ecosystem.
+A reliable, production-ready JavaScript web application for onboarding new users to the Hive blockchain. This app creates introduction posts with exact metadata matching the checkinwith.xyz format to ensure proper bot detection and integration with the Hive ecosystem.
 
 ## 🚀 Features
 
-- **Secure Login**: Validates Hive accounts and posting keys
-- **Image Upload**: Uploads selfies to Hive's image service
-- **Metadata Compliance**: Generates posts with exact metadata structure as checkinwith.xyz
-- **JSON Export**: Creates downloadable JSON files for testing and verification
-- **Two-Page Flow**: Clean separation between login and posting interfaces
-- **Mobile Responsive**: Works on all device sizes
+- **Real Hive Integration**: Uses @hiveio/dhive for authentic cryptographic signing
+- **Secure Image Upload**: Real image upload to Hive with posting key signatures
+- **Debug Window**: Copyable URLs for verification and testing
+- **Dual Mode**: Both real posting and JSON generation for testing
+- **Mobile Responsive**: Works on all devices
+- **Exact Metadata**: Matches checkinwith.xyz format precisely
 
 ## 🛠️ Technologies
 
