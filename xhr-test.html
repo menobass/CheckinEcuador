@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>XMLHttpRequest Imgur Test</title>
+</head>
+<body>
+    <h1>XMLHttpRequest Imgur Test</h1>
+    <p>Using older XMLHttpRequest instead of fetch</p>
+    
+    <input type="file" id="imageFileInput" accept="image/*">
+    <div id="result"></div>
+
+    <script>
+        const IMGUR_CLIENT_ID = '4d83e353ac99be2';
+        const imageFileInput = document.getElementById('imageFileInput');
+        const result = document.getElementById('result');
+        
+        imageFileInput.onchange = function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                result.textContent = 'Uploading...';
+                const formData = new FormData();
+                formData.append('image', file);
+                
+                const xhr = new XMLHttpRequest();
+                xhr.open('POST', 'https://api.imgur.com/3/image');
+                xhr.setRequestHeader('Authorization', 'Client-ID ' + IMGUR_CLIENT_ID);
+                
+                xhr.onload = function() {
+                    if (xhr.status === 200) {
+                        const data = JSON.parse(xhr.responseText);
+                        if (data.success && data.data && data.data.link) {
+                            result.innerHTML = `SUCCESS: <a href="${data.data.link}" target="_blank">${data.data.link}</a>`;
+                        } else {
+                            result.textContent = 'Upload failed.';
+                        }
+                    } else {
+                        result.textContent = 'Upload failed: ' + xhr.status;
+                    }
+                };
+                
+                xhr.onerror = function() {
+                    result.textContent = 'Upload failed: Network error';
+                };
+                
+                xhr.send(formData);
+            }
+        };
+    </script>
+</body>
+</html>

@@ -25,8 +25,7 @@
     <div class="test-section">
         <h2>Test 2: Imgur Upload Service</h2>
         <input type="file" id="testImage" accept="image/*">
-        <button onclick="testImageUpload()">Test Image Upload</button>
-        <div id="imageTest" class="result"></div>
+        <div id="imageTest" class="result">Select an image to automatically upload...</div>
     </div>
 
     <div class="test-section">
@@ -38,6 +37,39 @@
     <script src="js/config.js"></script>
     <script src="js/hive.js"></script>
     <script>
+        // Direct onchange event like working admin.html
+        const IMGUR_CLIENT_ID = '4d83e353ac99be2';
+        document.getElementById('testImage').onchange = function(e) {
+            const file = e.target.files[0];
+            const result = document.getElementById('imageTest');
+            
+            if (file) {
+                result.innerHTML = '<div class="info">Uploading...</div>';
+                const formData = new FormData();
+                formData.append('image', file);
+                fetch('https://api.imgur.com/3/image', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Client-ID ' + IMGUR_CLIENT_ID,
+                        'Accept': 'application/json',
+                        'Cache-Control': 'no-cache'
+                    },
+                    body: formData
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success && data.data && data.data.link) {
+                        result.innerHTML = `<div class="success">✅ Image upload works!<br>URL: <a href="${data.data.link}" target="_blank">${data.data.link}</a></div>`;
+                    } else {
+                        result.innerHTML = '<div class="error">❌ Upload failed: Invalid response</div>';
+                    }
+                })
+                .catch(error => {
+                    result.innerHTML = `<div class="error">❌ Error: ${error.message}</div>`;
+                });
+            }
+        };
+
         // Test functions
         async function testAccountValidation() {
             const result = document.getElementById('accountTest');
@@ -57,43 +89,6 @@
             } catch (error) {
                 result.innerHTML = `<div class="error">❌ Error: ${error.message}</div>`;
             }
-        }
-
-        async function testImageUpload() {
-            const result = document.getElementById('imageTest');
-            const fileInput = document.getElementById('testImage');
-            
-            if (!fileInput.files.length) {
-                result.innerHTML = '<div class="error">Please select an image first.</div>';
-                return;
-            }
-            
-            result.innerHTML = '<div class="info">Testing image upload...</div>';
-            
-            // Use EXACTLY the same approach as working admin.html
-            const file = fileInput.files[0];
-            const IMGUR_CLIENT_ID = '4d83e353ac99be2';
-            const formData = new FormData();
-            formData.append('image', file);
-            
-            fetch('https://api.imgur.com/3/image', {
-                method: 'POST',
-                headers: {
-                    Authorization: 'Client-ID ' + IMGUR_CLIENT_ID
-                },
-                body: formData
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (data.success && data.data && data.data.link) {
-                    result.innerHTML = `<div class="success">✅ Image upload works!<br>URL: <a href="${data.data.link}" target="_blank">${data.data.link}</a></div>`;
-                } else {
-                    result.innerHTML = '<div class="error">❌ Upload failed: Invalid response</div>';
-                }
-            })
-            .catch(error => {
-                result.innerHTML = `<div class="error">❌ Error: ${error.message}</div>`;
-            });
         }
 
         function testJSONGeneration() {

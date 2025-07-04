@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minimal Imgur Test</title>
+</head>
+<body>
+    <h1>Minimal Imgur Test</h1>
+    <p>This is exactly like your working admin.html</p>
+    
+    <input type="file" id="imageFileInput" accept="image/*">
+    <div id="result"></div>
+
+    <script>
+        // EXACT same code as your working admin.html
+        const IMGUR_CLIENT_ID = '4d83e353ac99be2';
+        const imageFileInput = document.getElementById('imageFileInput');
+        const result = document.getElementById('result');
+        
+        imageFileInput.onchange = function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                result.textContent = 'Uploading...';
+                const formData = new FormData();
+                formData.append('image', file);
+                fetch('https://api.imgur.com/3/image', {
+                    method: 'POST',
+                    headers: {
+                        Authorization: 'Client-ID ' + IMGUR_CLIENT_ID
+                    },
+                    body: formData
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success && data.data && data.data.link) {
+                        result.innerHTML = `SUCCESS: <a href="${data.data.link}" target="_blank">${data.data.link}</a>`;
+                    } else {
+                        result.textContent = 'Upload failed.';
+                    }
+                })
+                .catch(() => {
+                    result.textContent = 'Upload failed.';
+                });
+            }
+        };
+    </script>
+</body>
+</html>

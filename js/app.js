@@ -141,7 +141,7 @@ class CheckinEcuadorApp {
         // Show upload status immediately
         this.showImageUploadStatus('📤 Uploading image...', 'loading');
 
-        // Use EXACTLY the same approach as working admin.html
+        // Use EXACTLY the same approach as working admin.html and test
         const IMGUR_CLIENT_ID = '4d83e353ac99be2';
         const formData = new FormData();
         formData.append('image', file);
@@ -149,7 +149,9 @@ class CheckinEcuadorApp {
         fetch('https://api.imgur.com/3/image', {
             method: 'POST',
             headers: {
-                Authorization: 'Client-ID ' + IMGUR_CLIENT_ID
+                'Authorization': 'Client-ID ' + IMGUR_CLIENT_ID,
+                'Accept': 'application/json',
+                'Cache-Control': 'no-cache'
             },
             body: formData
         })
