@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Keychain Detection Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-box {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .success { color: #28a745; }
+        .error { color: #dc3545; }
+        .info { color: #17a2b8; }
+        .warning { color: #ffc107; }
+        pre {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>Advanced Keychain Detection Test</h1>
+    
+    <div class="test-box">
+        <h2>Browser Information</h2>
+        <div id="browserInfo"></div>
+    </div>
+    
+    <div class="test-box">
+        <h2>Keychain Detection Methods</h2>
+        <div id="keychainTests"></div>
+    </div>
+    
+    <div class="test-box">
+        <h2>Extension Detection</h2>
+        <div id="extensionTests"></div>
+    </div>
+    
+    <script>
+        function log(elementId, message, type = 'info') {
+            const element = document.getElementById(elementId);
+            element.innerHTML += `<div class="${type}"><strong>${new Date().toLocaleTimeString()}</strong>: ${message}</div>`;
+        }
+        
+        // Test browser info
+        function testBrowserInfo() {
+            const userAgent = navigator.userAgent;
+            const isBrave = navigator.brave ? 'Yes' : 'No';
+            const isChrome = userAgent.includes('Chrome');
+            const isFirefox = userAgent.includes('Firefox');
+            const isEdge = userAgent.includes('Edge');
+            
+            log('browserInfo', `User Agent: ${userAgent}`, 'info');
+            log('browserInfo', `Is Brave: ${isBrave}`, 'info');
+            log('browserInfo', `Is Chrome-based: ${isChrome}`, 'info');
+            log('browserInfo', `Is Firefox: ${isFirefox}`, 'info');
+            log('browserInfo', `Is Edge: ${isEdge}`, 'info');
+            log('browserInfo', `Extensions: ${navigator.plugins.length} plugins detected`, 'info');
+        }
+        
+        // Test different Keychain detection methods
+        function testKeychainDetection() {
+            // Method 1: Direct window check
+            if (typeof window.hive_keychain !== 'undefined') {
+                log('keychainTests', '✅ Method 1: window.hive_keychain exists', 'success');
+                log('keychainTests', `Type: ${typeof window.hive_keychain}`, 'info');
+                
+                // Test available methods
+                if (window.hive_keychain) {
+                    const methods = Object.keys(window.hive_keychain);
+                    log('keychainTests', `Available methods: ${methods.join(', ')}`, 'info');
+                    
+                    // Test handshake
+                    if (window.hive_keychain.requestHandshake) {
+                        window.hive_keychain.requestHandshake(() => {
+                            log('keychainTests', '✅ Handshake successful', 'success');
+                        });
+                    }
+                }
+            } else {
+                log('keychainTests', '❌ Method 1: window.hive_keychain not found', 'error');
+            }
+            
+            // Method 2: Check for DOM injection
+            setTimeout(() => {
+                if (typeof window.hive_keychain !== 'undefined') {
+                    log('keychainTests', '✅ Method 2: Keychain detected after delay', 'success');
+                } else {
+                    log('keychainTests', '❌ Method 2: Still no Keychain after delay', 'error');
+                }
+            }, 2000);
+            
+            // Method 3: Check for script injection
+            const scripts = document.querySelectorAll('script');
+            let foundKeychain = false;
+            scripts.forEach(script => {
+                if (script.src && script.src.includes('keychain')) {
+                    foundKeychain = true;
+                    log('keychainTests', '✅ Method 3: Found Keychain script', 'success');
+                }
+            });
+            if (!foundKeychain) {
+                log('keychainTests', '❌ Method 3: No Keychain script found', 'error');
+            }
+        }
+        
+        // Test extension-specific detection
+        function testExtensionDetection() {
+            // Check if we can access extension APIs
+            if (typeof chrome !== 'undefined' && chrome.runtime) {
+                log('extensionTests', '✅ Chrome extension API available', 'success');
+            } else {
+                log('extensionTests', '❌ Chrome extension API not available', 'error');
+            }
+            
+            // Check for specific extension IDs (Keychain's known IDs)
+            const keychainIds = [
+                'jcacnejopjdphbnjgfaaobbfafkihpep', // Chrome store ID
+                'hive-keychain@hive.io' // Firefox ID
+            ];
+            
+            keychainIds.forEach(id => {
+                try {
+                    if (typeof chrome !== 'undefined' && chrome.runtime) {
+                        chrome.runtime.sendMessage(id, {ping: true}, (response) => {
+                            if (response) {
+                                log('extensionTests', `✅ Found extension: ${id}`, 'success');
+                            } else {
+                                log('extensionTests', `❌ Extension not found: ${id}`, 'error');
+                            }
+                        });
+                    }
+                } catch (e) {
+                    log('extensionTests', `❌ Error checking ${id}: ${e.message}`, 'error');
+                }
+            });
+            
+            // Check window properties that might indicate Keychain
+            const windowProps = Object.getOwnPropertyNames(window);
+            const keychainProps = windowProps.filter(prop => 
+                prop.toLowerCase().includes('keychain') || 
+                prop.toLowerCase().includes('hive')
+            );
+            
+            if (keychainProps.length > 0) {
+                log('extensionTests', `Found Hive/Keychain related properties: ${keychainProps.join(', ')}`, 'info');
+            } else {
+                log('extensionTests', 'No Hive/Keychain properties found in window', 'warning');
+            }
+        }
+        
+        // Run all tests
+        function runAllTests() {
+            testBrowserInfo();
+            testKeychainDetection();
+            testExtensionDetection();
+        }
+        
+        // Run tests when page loads
+        window.addEventListener('load', runAllTests);
+        
+        // Also run tests after a delay to catch late-loading extensions
+        setTimeout(runAllTests, 3000);
+    </script>
+</body>
+</html>

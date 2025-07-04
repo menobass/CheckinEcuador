@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CheckinEcuador - Hybrid Auth</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            margin: 20px 0;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            color: #667eea;
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+        .auth-options {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .auth-option {
+            border: 2px solid #e1e5e9;
+            border-radius: 12px;
+            padding: 20px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .auth-option:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+        }
+        .auth-option.selected {
+            border-color: #667eea;
+            background: #f8f9ff;
+        }
+        .auth-option h3 {
+            margin: 0 0 10px 0;
+            color: #333;
+        }
+        .auth-option p {
+            margin: 0;
+            color: #666;
+            font-size: 0.9rem;
+        }
+        .form-group {
+            margin: 20px 0;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        .btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+            width: 100%;
+        }
+        .btn:hover {
+            background: #5a6fd8;
+        }
+        .btn:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+        .success { color: #28a745; }
+        .error { color: #dc3545; }
+        .info { color: #17a2b8; }
+        .hidden { display: none; }
+        .status-message {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        .status-message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status-message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .status-message.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>CheckinEcuador</h1>
+            <p>Choose your preferred authentication method</p>
+        </div>
+        
+        <div class="auth-options">
+            <div class="auth-option" id="keychain-option" onclick="selectAuthMethod('keychain')">
+                <h3>🔐 Login with Hive Keychain</h3>
+                <p>Secure authentication using the Hive Keychain browser extension or mobile app</p>
+                <div id="keychain-status" class="status-message info" style="margin-top: 10px;">
+                    Checking for Keychain...
+                </div>
+            </div>
+            
+            <div class="auth-option" id="manual-option" onclick="selectAuthMethod('manual')">
+                <h3>🔑 Manual Authentication</h3>
+                <p>Enter your Hive username and posting key directly (less secure but works everywhere)</p>
+            </div>
+            
+            <div class="auth-option" id="qr-option" onclick="selectAuthMethod('qr')">
+                <h3>📱 QR Code Authentication</h3>
+                <p>Scan QR code with Hive Keychain mobile app (coming soon)</p>
+            </div>
+        </div>
+        
+        <!-- Keychain Login Form -->
+        <div id="keychain-form" class="hidden">
+            <div class="form-group">
+                <label for="keychain-username">Hive Username</label>
+                <input type="text" id="keychain-username" placeholder="Enter your Hive username" required>
+            </div>
+            <button class="btn" onclick="loginWithKeychain()">Login with Keychain</button>
+            <div id="keychain-result" class="status-message hidden"></div>
+        </div>
+        
+        <!-- Manual Login Form -->
+        <div id="manual-form" class="hidden">
+            <div class="form-group">
+                <label for="manual-username">Hive Username</label>
+                <input type="text" id="manual-username" placeholder="Enter your Hive username" required>
+            </div>
+            <div class="form-group">
+                <label for="manual-key">Posting Key</label>
+                <input type="password" id="manual-key" placeholder="Enter your posting key" required>
+            </div>
+            <button class="btn" onclick="loginManually()">Login</button>
+            <div id="manual-result" class="status-message hidden"></div>
+        </div>
+        
+        <!-- QR Code Form -->
+        <div id="qr-form" class="hidden">
+            <div class="form-group">
+                <p>QR Code authentication will be available soon. This will allow you to:</p>
+                <ul>
+                    <li>Scan a QR code with your Keychain mobile app</li>
+                    <li>Authenticate without entering any credentials</li>
+                    <li>Work on any device, even without browser extensions</li>
+                </ul>
+            </div>
+            <button class="btn" disabled>Coming Soon</button>
+        </div>
+    </div>
+    
+    <script>
+        let selectedAuthMethod = null;
+        let keychainAvailable = false;
+        
+        // Check for Keychain availability
+        function checkKeychain() {
+            const statusDiv = document.getElementById('keychain-status');
+            
+            // Try multiple detection methods
+            setTimeout(() => {
+                if (typeof window.hive_keychain !== 'undefined') {
+                    keychainAvailable = true;
+                    statusDiv.className = 'status-message success';
+                    statusDiv.textContent = '✅ Keychain detected and ready!';
+                    
+                    // Enable keychain option
+                    document.getElementById('keychain-option').style.opacity = '1';
+                } else {
+                    keychainAvailable = false;
+                    statusDiv.className = 'status-message error';
+                    statusDiv.innerHTML = '❌ Keychain not detected. <a href="https://hive-keychain.com" target="_blank">Get Keychain</a>';
+                    
+                    // Disable keychain option
+                    document.getElementById('keychain-option').style.opacity = '0.6';
+                }
+            }, 1000);
+        }
+        
+        // Select authentication method
+        function selectAuthMethod(method) {
+            // Clear previous selections
+            document.querySelectorAll('.auth-option').forEach(opt => {
+                opt.classList.remove('selected');
+            });
+            document.querySelectorAll('[id$="-form"]').forEach(form => {
+                form.classList.add('hidden');
+            });
+            
+            // Select new method
+            selectedAuthMethod = method;
+            document.getElementById(method + '-option').classList.add('selected');
+            document.getElementById(method + '-form').classList.remove('hidden');
+            
+            // Don't allow keychain selection if not available
+            if (method === 'keychain' && !keychainAvailable) {
+                showResult('keychain-result', 'Keychain not available. Please install Keychain extension or use manual authentication.', 'error');
+            }
+        }
+        
+        // Show result message
+        function showResult(elementId, message, type) {
+            const element = document.getElementById(elementId);
+            element.className = `status-message ${type}`;
+            element.textContent = message;
+            element.classList.remove('hidden');
+        }
+        
+        // Login with Keychain
+        function loginWithKeychain() {
+            const username = document.getElementById('keychain-username').value.trim();
+            
+            if (!username) {
+                showResult('keychain-result', 'Please enter your username', 'error');
+                return;
+            }
+            
+            if (!keychainAvailable) {
+                showResult('keychain-result', 'Keychain not available', 'error');
+                return;
+            }
+            
+            showResult('keychain-result', 'Requesting Keychain authentication...', 'info');
+            
+            const loginMessage = `Login to CheckinEcuador at ${Date.now()}`;
+            window.hive_keychain.requestSignBuffer(username, loginMessage, 'Posting', (response) => {
+                if (response.success) {
+                    showResult('keychain-result', `✅ Successfully logged in as @${username}!`, 'success');
+                    // Here you would proceed to the main app
+                    setTimeout(() => {
+                        alert('Login successful! You can now proceed to create your introduction post.');
+                    }, 1000);
+                } else {
+                    showResult('keychain-result', `❌ Login failed: ${response.message || 'Unknown error'}`, 'error');
+                }
+            });
+        }
+        
+        // Login manually
+        function loginManually() {
+            const username = document.getElementById('manual-username').value.trim();
+            const postingKey = document.getElementById('manual-key').value.trim();
+            
+            if (!username || !postingKey) {
+                showResult('manual-result', 'Please enter both username and posting key', 'error');
+                return;
+            }
+            
+            showResult('manual-result', 'Validating credentials...', 'info');
+            
+            // Here you would validate the posting key
+            // For now, just simulate success
+            setTimeout(() => {
+                showResult('manual-result', `✅ Successfully logged in as @${username}!`, 'success');
+                // Here you would proceed to the main app
+                setTimeout(() => {
+                    alert('Login successful! You can now proceed to create your introduction post.');
+                }, 1000);
+            }, 1000);
+        }
+        
+        // Initialize
+        window.addEventListener('load', () => {
+            checkKeychain();
+        });
+    </script>
+</body>
+</html>
