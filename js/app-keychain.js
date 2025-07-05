@@ -1,8 +1,10 @@
 // CheckinEcuador App with Hive Keychain Integration
 class CheckinEcuadorApp {
     constructor() {
+        console.log('CheckinEcuador app constructor called');
         this.currentUser = null;
         this.uploadedImageUrl = null;
+        window.checkinEcuadorApp = this; // Store reference
         this.init();
     }
 
@@ -12,37 +14,53 @@ class CheckinEcuadorApp {
     }
 
     setupEventListeners() {
-        // Keychain login            app: 'checkinecuador/1.0.0',
-            username: this.currentUser,
-            image: [data.imageUrl],
-            country: 'Ecuador',
-            onboarder: data.onboardedBy,
-            introductionText: data.intro,
-            communityName: 'hive-115276',
-            lightningAddress: lightningAddress,
-            developer: 'menobass' document.getElementById('keychain-login-btn').addEventListener('click', () => {
-            this.loginWithKeychain();
-        });
+        console.log('Setting up event listeners...');
+        
+        // Keychain login
+        const loginBtn = document.getElementById('keychain-login-btn');
+        if (loginBtn) {
+            console.log('Login button found, adding listener');
+            loginBtn.addEventListener('click', () => {
+                console.log('Login button clicked!');
+                this.loginWithKeychain();
+            });
+        } else {
+            console.error('Login button not found!');
+        }
 
         // Logout
-        document.getElementById('logout-button').addEventListener('click', () => {
-            this.logout();
-        });
+        const logoutBtn = document.getElementById('logout-button');
+        if (logoutBtn) {
+            logoutBtn.addEventListener('click', () => {
+                this.logout();
+            });
+        }
 
         // Image upload
-        document.getElementById('selfie').addEventListener('change', (e) => {
-            this.handleImageSelect(e);
-        });
+        const selfieInput = document.getElementById('selfie');
+        if (selfieInput) {
+            selfieInput.addEventListener('change', (e) => {
+                this.handleImageSelect(e);
+            });
+        }
 
         // Post to Hive with Keychain
-        document.getElementById('postToHive').addEventListener('click', () => {
-            this.postToHiveWithKeychain();
-        });
+        const postBtn = document.getElementById('postToHive');
+        if (postBtn) {
+            postBtn.addEventListener('click', () => {
+                this.postToHiveWithKeychain();
+            });
+        }
 
         // Generate JSON (fallback)
-        document.getElementById('generateJSON').addEventListener('click', () => {
-            this.handleGenerateJSON();
-        });
+        const jsonBtn = document.getElementById('generateJSON');
+        if (jsonBtn) {
+            jsonBtn.addEventListener('click', () => {
+                this.handleGenerateJSON();
+            });
+        }
+        
+        console.log('Event listeners setup complete');
     }
 
     checkKeychainAvailability() {
@@ -433,7 +451,25 @@ class CheckinEcuadorApp {
     }
 }
 
-// Initialize the app
+// Initialize the app with multiple fallbacks
 document.addEventListener('DOMContentLoaded', () => {
+    console.log('DOM loaded, initializing CheckinEcuador app...');
     new CheckinEcuadorApp();
 });
+
+// Fallback initialization
+window.addEventListener('load', () => {
+    // Only initialize if not already done
+    if (!window.checkinEcuadorApp) {
+        console.log('Window loaded, initializing CheckinEcuador app (fallback)...');
+        window.checkinEcuadorApp = new CheckinEcuadorApp();
+    }
+});
+
+// Emergency fallback
+setTimeout(() => {
+    if (!window.checkinEcuadorApp) {
+        console.log('Timeout fallback, initializing CheckinEcuador app...');
+        window.checkinEcuadorApp = new CheckinEcuadorApp();
+    }
+}, 2000);
