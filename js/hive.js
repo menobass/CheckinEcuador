@@ -116,7 +116,7 @@ class HiveIntegration {
                     [0, {
                         beneficiaries: [
                             {
-                                account: 'threespeakselfie',
+                                account: 'hiveecuador',
                                 weight: 8000
                             }
                         ]

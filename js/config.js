@@ -28,11 +28,11 @@ const CONFIG = {
         ],
         
         // Default community for posts
-        defaultCommunity: 'introduceyourself',
+        defaultCommunity: 'hive-115276',  // Ecuador Community
         
         // Beneficiary settings
         beneficiaries: [{
-            account: 'threespeakselfie',
+            account: 'hiveecuador',  // Your Ecuador community account
             weight: 8000  // 80%
         }]
     }

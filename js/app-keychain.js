@@ -245,7 +245,7 @@ class CheckinEcuadorApp {
                 allow_curation_rewards: true,
                 extensions: [[0, {
                     beneficiaries: [{
-                        account: 'threespeakselfie',
+                        account: 'hiveecuador',
                         weight: 8000
                     }]
                 }]]
@@ -320,7 +320,7 @@ class CheckinEcuadorApp {
                             allow_curation_rewards: true,
                             extensions: [[0, {
                                 beneficiaries: [{
-                                    account: "threespeakselfie",
+                                    account: "hiveecuador",
                                     weight: 8000
                                 }]
                             }]]
@@ -335,7 +335,7 @@ class CheckinEcuadorApp {
                     tags: jsonMetadata.tags,
                     app: jsonMetadata.app,
                     beneficiaries: [{
-                        account: "threespeakselfie",
+                        account: "hiveecuador",
                         weight: 8000
                     }]
                 }
